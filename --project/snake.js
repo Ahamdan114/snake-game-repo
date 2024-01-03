@@ -1,18 +1,18 @@
 window.onload = function () {
-    // BOARD    
+    // BOARD
     let blockSize = 40;
     let rows = 12;
     let cols = 23;
-    let canvas = document.getElementById('board');
+    let canvas = document.getElementById("board");
     canvas.height = rows * blockSize;
     canvas.width = cols * blockSize;
     let context = canvas.getContext("2d"); //used for drawing on the board
 
     // SCORE
     let score = 0;
-    let scoreText = document.getElementById('score');
+    let scoreText = document.getElementById("score");
     scoreText.innerHTML = formatToThreeDigits(score);
-    
+
     // SNAKE HEAD
     let snakeX = blockSize * 5;
     let snakeY = blockSize * 5;
@@ -34,15 +34,22 @@ window.onload = function () {
     // don't let the game crash when pressing keys fast
     let keyTimeFrame = false;
 
+    // Audio elements
+    const eatSound = new Audio("./sounds/eat-sound.mp3"); // Replace 'path/to/eat-sound.mp3' with the actual path to your eat sound file
+    const collisionSound = new Audio("./sounds/wall-collision.mp3"); // Replace 'path/to/collision-sound.mp3' with the actual path to your collision sound file
+    const gameOverSound = new Audio("./sounds/game-over.mp3"); // Replace 'path/to/game-over-sound.mp3' with the actual path to your game over sound file
+    
     placeFood();
     document.addEventListener("keyup", changeDirection);
-    //update();
-    setInterval(update, 3000 / 10); // every 300 milliseconds it is going to run the update function
+
+    const periodOfExecution = setInterval(update, 3000 / 10); // every 300 milliseconds it is going to run the update function
 
     function update() {
         keyTimeFrame = false;
 
         if (isGameOver) {
+            gameOverSound.play();
+            clearInterval(periodOfExecution)
             return;
         }
 
@@ -55,11 +62,11 @@ window.onload = function () {
         //Snake head
         context.fillStyle = "#202c1c";
         if (!hasTeleported) {
-        // Only update the snake's position if it hasn't teleported in this update
+            // Only update the snake's position if it hasn't teleported in this update
             snakeX += velocityX * blockSize;
             snakeY += velocityY * blockSize;
         }
-        if(!snakeBody.length){
+        if (!snakeBody.length) {
             snakeBody.push([foodX, foodY]);
         }
 
@@ -71,6 +78,9 @@ window.onload = function () {
             snakeBody.push([foodX, foodY]);
             placeFood();
             scoreText.innerHTML = formatToThreeDigits(++score);
+
+            // Play eat sound when snake eats food
+            eatSound.play();
         }
 
         for (let i = snakeBody.length - 1; i > 0; i--) {
@@ -93,7 +103,12 @@ window.onload = function () {
         context.closePath();
 
         for (let i = 0; i < snakeBody.length; i++) {
-            context.fillRect(snakeBody[i][0], snakeBody[i][1], blockSize - 5, blockSize - 5);
+            context.fillRect(
+                snakeBody[i][0],
+                snakeBody[i][1],
+                blockSize - 5,
+                blockSize - 5
+            );
         }
 
         checkSelfCollision();
@@ -106,21 +121,18 @@ window.onload = function () {
     }
 
     function changeDirection(e) {
-        if(keyTimeFrame) return;
+        if (keyTimeFrame) return;
 
         if (e.code == "ArrowUp" && velocityY != 1) {
             velocityX = 0;
             velocityY = -1;
-        }
-        else if (e.code == "ArrowDown" && velocityY != -1) {
+        } else if (e.code == "ArrowDown" && velocityY != -1) {
             velocityX = 0;
             velocityY = 1;
-        }
-        else if (e.code == "ArrowLeft" && velocityX != 1) {
+        } else if (e.code == "ArrowLeft" && velocityX != 1) {
             velocityX = -1;
             velocityY = 0;
-        }
-        else if (e.code == "ArrowRight" && velocityX != -1) {
+        } else if (e.code == "ArrowRight" && velocityX != -1) {
             velocityX = 1;
             velocityY = 0;
         }
@@ -143,14 +155,15 @@ window.onload = function () {
         } else if (snakeY < 0) {
             snakeY = canvas.height - blockSize;
             hasTeleported = true;
-        }  
+        }
     }
 
-    function checkSelfCollision(){
+    function checkSelfCollision() {
         // Game over condition
         for (let i = 1; i < snakeBody.length; i++) {
-            if (snakeX == snakeBody[i][0] && snakeY == snakeBody[i][1]){
+            if (snakeX == snakeBody[i][0] && snakeY == snakeBody[i][1]) {
                 isGameOver = true;
+                collisionSound.play();
                 alert("Game Over");
                 break;
             }
@@ -158,7 +171,6 @@ window.onload = function () {
     }
 
     function formatToThreeDigits(number) {
-        return String(number).padStart(3, '0');
-      }
-}
-
+        return String(number).padStart(3, "0");
+    }
+};
