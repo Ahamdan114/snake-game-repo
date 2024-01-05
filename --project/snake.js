@@ -42,7 +42,23 @@ window.onload = function () {
     placeFood();
     document.addEventListener("keyup", changeDirection);
 
-    const periodOfExecution = setInterval(update, 3000 / 10); // every 300 milliseconds it is going to run the update function
+     // Speech recognition setup
+
+     const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+     recognition.continuous = true;
+     recognition.lang = "en-US";
+     recognition.interimResults = true; // Enable interim results
+ 
+     // Set a shorter end timeout to minimize the delay
+ 
+     recognition.endTimeout = 0; // Default is 700 milliseconds
+     recognition.maxAlternatives = 1; // Getting the top confidence for the words
+     let commandProcessed = true; // Flag for filtering multiple speech requests
+ 
+     // Start speech recognition
+     recognition.start();
+
+    let periodOfExecution = setInterval(update, 3000 / 10); // every 300 milliseconds it is going to run the update function
 
     function update() {
         keyTimeFrame = false;
@@ -139,6 +155,60 @@ window.onload = function () {
 
         keyTimeFrame = true;
     }
+
+    recognition.onresult = function (event) {
+        const arrOfAllowedWords = ["up", "down", "left", "right"];
+        const currentSpeech = event.results[event.results.length - 1][0];
+
+        const inputText = currentSpeech.transcript.toLowerCase();
+        const isFinal = event.results[event.results.length - 1].isFinal;
+
+        // Only process final results to reduce delay
+        if (inputText !== " " && isFinal && commandProcessed) {
+            console.log(currentSpeech);
+            const command = arrOfAllowedWords.find((word) => inputText.includes(word));
+            if (command) {
+                commandProcessed = false; // Set the flag to false
+
+                // Delay of 0s before executing the command
+                setTimeout(() => {
+                    switch (command) {
+                        case "up":
+                            if (velocityY !== 1) {
+                                velocityX = 0;
+                                velocityY = -1;
+                            }
+                            break;
+                        case "down":
+                            if (velocityY !== -1) {
+                                velocityX = 0;
+                                velocityY = 1;
+                            }
+                            break;
+                        case "left":
+                            if (velocityX !== 1) {
+                                velocityX = -1;
+                                velocityY = 0;
+                            }
+                            break;
+                        case "right":
+                            if (velocityX !== -1) {
+                                velocityX = 1;
+                                velocityY = 0;
+                            }
+                            break;
+                    }
+
+                    commandProcessed = true; // Set the flag to true after processing
+                }, 0);
+            }
+        }
+    };
+
+    // Handle speech recognition errors
+    recognition.onerror = function (event) {
+        console.error("Speech recognition error:", event.error);
+    };
 
     function teleportingOnTheOtherSideWhenOutOfBounds() {
         if (snakeX >= canvas.width) {
