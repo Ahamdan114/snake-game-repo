@@ -35,9 +35,9 @@ window.onload = function () {
     let keyTimeFrame = false;
 
     // Audio elements
-    const eatSound = new Audio("./sounds/eat-sound.mp3"); // Replace 'path/to/eat-sound.mp3' with the actual path to your eat sound file
+    const eatSound = new Audio("./sounds/snake-eat-sound.mp3"); // Replace 'path/to/eat-sound.mp3' with the actual path to your eat sound file
     const collisionSound = new Audio("./sounds/wall-collision.mp3"); // Replace 'path/to/collision-sound.mp3' with the actual path to your collision sound file
-    const gameOverSound = new Audio("./sounds/game-over.mp3"); // Replace 'path/to/game-over-sound.mp3' with the actual path to your game over sound file
+    //const gameOverSound = new Audio("./sounds/game-over.mp3"); // Replace 'path/to/game-over-sound.mp3' with the actual path to your game over sound file
     
     placeFood();
     document.addEventListener("keyup", changeDirection);
@@ -64,8 +64,9 @@ window.onload = function () {
         keyTimeFrame = false;
 
         if (isGameOver) {
-            gameOverSound.play();
+           // gameOverSound.play();
             clearInterval(periodOfExecution)
+            setTimeout(showGameOverScreen ,1500);
             return;
         }
 
@@ -108,9 +109,9 @@ window.onload = function () {
 
         //food
         context.beginPath();
-        let radiusArc = blockSize / 2;
-        let xArc = foodX + blockSize / 2;
-        let yArc = foodY + blockSize / 2;
+        let radiusArc = blockSize / 3;
+        let xArc = foodX + (blockSize / 2) - (radiusArc/4);
+        let yArc = foodY + (blockSize / 2) - (radiusArc/4);
         let startAngleArc = 0;
         let endAngleArc = 2 * Math.PI;
         context.arc(xArc, yArc, radiusArc, startAngleArc, endAngleArc);
@@ -234,7 +235,6 @@ window.onload = function () {
             if (snakeX == snakeBody[i][0] && snakeY == snakeBody[i][1]) {
                 isGameOver = true;
                 collisionSound.play();
-                alert("Game Over");
                 break;
             }
         }
@@ -242,5 +242,34 @@ window.onload = function () {
 
     function formatToThreeDigits(number) {
         return String(number).padStart(3, "0");
+    }
+
+    function showGameOverScreen() {
+        // Hide game container, show game-over screen
+        document.getElementById("game-container").classList.add("d-none");
+        document.getElementById("game-over").classList.remove("d-none");
+        document.getElementById("header").classList.add("d-none")
+    
+        // Restart game when restart button is clicked
+        document.getElementById("restart-btn").addEventListener("click", function () {
+            resetGame();
+            document.getElementById("game-container").classList.remove("d-none");
+            document.getElementById("game-over").classList.add("d-none");
+            periodOfExecution = setInterval(update, 3000 / 10);
+        });
+    }
+    
+    function resetGame() {
+        // Reset game variables
+        document.getElementById("header").classList.remove("d-none")
+        score = 0;
+        snakeX = blockSize * 5;
+        snakeY = blockSize * 5;
+        snakeBody = [];
+        velocityX = 0;
+        velocityY = 0;
+        isGameOver = false;
+        scoreText.innerHTML = formatToThreeDigits(score);
+        placeFood();
     }
 };
